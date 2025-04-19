@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read # Read access for the workflow
+
+jobs:
+  tests:
+    uses: ./.github/workflows/test.yml
+  release:
+    needs: [tests]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Write access to create releases and tags
+      id-token: write # Necessary for generating the ID token for authentication
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: "Generate token"
+        id: generate_token
+        uses: tibdex/github-app-token@v1
+        with:
+          app_id: ${{ secrets.BOT_APP_ID }}
+          private_key: ${{ secrets.BOT_PRIVATE_KEY }}
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ steps.generate_token.outputs.token }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Set up GitHub Token
+        run: |
+          echo "GITHUB_TOKEN=${{ steps.generate_token.outputs.token }}" >> $GITHUB_ENV
+
+      - name: Run release
+        run: cd ./packages/app && npm run release
+        env:
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }} # Pass token for authentication
+
+      - name: Push changes
+        run: git push --follow-tags # Push the new release and tags back to the repository
+        env:
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }} # Pass token for authentication

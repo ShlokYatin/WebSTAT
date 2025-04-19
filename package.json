@@ -1,0 +1,25 @@
+{
+  "name": "statstream-monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/app",
+    "packages/docs",
+    "packages/studio"
+  ],
+  "engines": {
+    "node": "^18.18.0"
+  },
+  "scripts": {
+    "dev:app": "bun run --cwd packages/app dev",
+    "build:app": "bun run --cwd packages/app build",
+    "test:app": "bun run --cwd packages/app test",
+    "lint:app": "bun run --cwd packages/app lint",
+    "release:app": "bun run --cwd packages/app release",
+    "release:docs": "bun run --cwd packages/docs deploy",
+    "dev:docs": "bun run --cwd packages/docs start",
+    "build:docs": "bun run --cwd packages/docs build",
+    "docs": "bun run --cwd packages/docs",
+    "app": "bun run --cwd packages/app",
+    "studio": "bun run --cwd packages/studio"
+  }
+}

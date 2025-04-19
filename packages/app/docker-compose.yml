@@ -1,0 +1,11 @@
+services:
+  statstream:
+    build: .
+    environment:
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - DISCORD_GUILD_ID=${DISCORD_GUILD_ID}
+      - PORT=${PORT}
+    env_file: ".env"
+    ports:
+      - "3000:3000"
+    restart: always

@@ -1,0 +1,54 @@
+name: Trigger Release Cycle
+
+on:
+  push:
+    branches:
+      - dev
+  workflow_dispatch:
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install jq
+        run: sudo apt-get install jq -y
+
+      - name: Get the last merged PR info and Check for `@release` Label
+        id: pr_info
+        run: |
+          # Get the last PR merged into this branch
+          PR_NUMBER=$(curl -s "https://api.github.com/repos/${{ github.repository }}/pulls?state=closed&direction=desc" | jq -r '.[0].number')
+          if [[ -z "$PR_NUMBER" ]]; then
+            echo "Error: Unable to find the last merged PR."
+            exit 1
+          fi
+          echo "Last PR merged: #$PR_NUMBER"
+
+          # Get PR labels
+          PR_LABELS=$(curl -s "https://api.github.com/repos/${{ github.repository }}/issues/$PR_NUMBER/labels" | jq -r '.[].name' | tr '\n' ',' | sed 's/,$//')
+          echo "PR Labels: $PR_LABELS"
+
+          # Check if the @release label exists
+          if [[ "$PR_LABELS" == *"@release"* ]]; then
+            echo "Release label found!"
+          else
+            echo "No release label found. Exiting."
+            exit 1
+          fi
+
+          # Set the PR_LABELS to an environment variable for the next step
+          echo "PR_LABELS=$PR_LABELS" >> $GITHUB_ENV
+
+      - name: Trigger Test Workflow
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          script: |
+            github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'release.yml',
+              ref: 'dev',
+            });
