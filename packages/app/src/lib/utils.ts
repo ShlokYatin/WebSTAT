@@ -5,9 +5,10 @@ import terser from "terser";
 export async function fetchLocationData(req: Request) {
   // Retrieve the client IP address
   const clientIP =
-    req.headers["x-forwarded-for"]?.toString().split(",")[0] || // Use the first IP in the X-Forwarded-For header
-    req.socket.remoteAddress || // Fallback to the socket's remote address
-    "";
+  req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || // Use the first IP in the X-Forwarded-For header
+  req.connection.remoteAddress ||
+  req.socket.remoteAddress || // Fallback to the socket's remote address
+  "";
 
   let locationData: LocationData;
 
